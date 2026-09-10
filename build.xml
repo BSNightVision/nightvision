@@ -30,8 +30,8 @@ javadoc   (Html documentation on NV classes)
 <project default="main">
 
   <!-- Keep in sync with Nvj.java... -->
-  <property name="year"    value="2023"/>
-  <property name="version" value="5.3"/>
+  <property name="year"    value="2024"/>
+  <property name="version" value="5.4"/>
 
 
   <!-- Source directories -->

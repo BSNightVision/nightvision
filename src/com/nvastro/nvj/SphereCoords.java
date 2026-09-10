@@ -1,6 +1,6 @@
 /*
  * SphereCoords.java  -  Spherical coordinates
- * Copyright (C) 2011-2023 Brian Simpson
+ * Copyright (C) 2011-2024 Brian Simpson
  * This file is part of Night Vision.
  *
  * Night Vision is free software: you can redistribute it and/or modify
@@ -132,42 +132,7 @@ public class SphereCoords {
   public double getAlt() { return dec; }
 
   /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-   * Returns a 3x1 matrix resulting from multiplication by the
-   * specified 3x3 rotation matrix.
-   *
-   * @param m 3x3 matrix
-   * @return New Matrix3x1 object
-   */
-  public Matrix3x1 rotate(Matrix3x3 m) {
-    double sinra = Math.sin(ra);
-    double cosra = Math.cos(ra);
-    double sinde = Math.sin(dec);
-    double cosde = Math.cos(dec);
-    return m.mult(new Matrix3x1(cosra * cosde, sinra * cosde, sinde));
-  }
-
-  /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-   * Returns new SphereCoords resulting from multiplication by the
-   * specified 3x3 rotation matrix.
-   *
-   * @param m 3x3 matrix
-   * @return New SphereCoords object
-   */
-  public SphereCoords rotateRADec(Matrix3x3 m) {
-    double ra, dec;
-
-    Matrix3x1 mat = rotate(m);
-    mat.num[2] = Math.max(-1.0, Math.min(mat.num[2], 1.0));
-    dec = Math.asin(mat.num[2]);
-    if ( mat.num[0] == 0 && mat.num[1] == 0 ) ra = 0.0;
-    else ra = Math.atan2(mat.num[1], mat.num[0]); /* ra between -pi and pi */
-    if ( ra < 0 ) ra += TwoPI;                    /* ra between 0 and 2 pi */
-    return new SphereCoords(ra, dec);
-  }
-
-  /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
    * Returns right ascension in string form as "#h #.#m".
-   * Used in Object identification window.
    *
    * @return Right Ascension as a String
    */
@@ -225,7 +190,7 @@ public class SphereCoords {
   }
 
   /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-   * Returns azimuth in string form as "[-]#d #m".
+   * Returns azimuth in string form as "#d #m".
    * Used in Object identification window.
    *
    * @return Azimuth as a String
@@ -262,7 +227,7 @@ public class SphereCoords {
    *               if true, 0 &lt;= result &lt;= 360
    * @return Angle as a String
    */
-  static public String tellDgMn(double rad, boolean offset) {
+  static private String tellDgMn(double rad, boolean offset) {
     String sign;
 
     double deg = rad * 180 / Math.PI;
@@ -281,7 +246,6 @@ public class SphereCoords {
     if ( mn == 60 ) {
       mn = 0; dg++;
     }
-    if ( dg == 0 && mn == 0 ) sign = "";  // Prevent "-0d 0m"
     return new String(sign + dg + IdentifyDlg.Deg + " " +
                              mn + IdentifyDlg.Min);
   }
@@ -304,7 +268,7 @@ public class SphereCoords {
    *               if true, 0 &lt;= result &lt;= 360
    * @return Angle as a String
    */
-  static public String tellDgMnSc(double rad, boolean offset) {
+  static private String tellDgMnSc(double rad, boolean offset) {
     String sign;
 
     double deg = rad * 180 / Math.PI;
@@ -328,9 +292,42 @@ public class SphereCoords {
         mn = 0; dg++;
       }
     }
-    if ( dg == 0 && mn == 0 && sc == 0 ) sign = "";  // Prevent "-0d 0m 0s"
     return new String(sign + dg + IdentifyDlg.Deg + " " + mn + IdentifyDlg.Min +
                        " " + sc + IdentifyDlg.Sec);
+  }
+
+  /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+   * Returns a 3x1 matrix resulting from multiplication by the
+   * specified 3x3 rotation matrix.
+   *
+   * @param m 3x3 matrix
+   * @return New Matrix3x1 object
+   */
+  public Matrix3x1 rotate(Matrix3x3 m) {
+    double sinra = Math.sin(ra);
+    double cosra = Math.cos(ra);
+    double sinde = Math.sin(dec);
+    double cosde = Math.cos(dec);
+    return m.mult(new Matrix3x1(cosra * cosde, sinra * cosde, sinde));
+  }
+
+  /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+   * Returns new SphereCoords resulting from multiplication by the
+   * specified 3x3 rotation matrix.
+   *
+   * @param m 3x3 matrix
+   * @return New SphereCoords object
+   */
+  public SphereCoords rotateRADec(Matrix3x3 m) {
+    double ra, dec;
+
+    Matrix3x1 mat = rotate(m);
+    mat.num[2] = Math.max(-1.0, Math.min(mat.num[2], 1.0));
+    dec = Math.asin(mat.num[2]);
+    if ( mat.num[0] == 0 && mat.num[1] == 0 ) ra = 0.0;
+    else ra = Math.atan2(mat.num[1], mat.num[0]); /* ra between -pi and pi */
+    if ( ra < 0 ) ra += TwoPI;                    /* ra between 0 and 2 pi */
+    return new SphereCoords(ra, dec);
   }
 
   /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->

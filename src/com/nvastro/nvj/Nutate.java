@@ -1,6 +1,6 @@
 /*
  * Nutate.java  -  Nutation, the obliquity of the ecliptic, & aberration
- * Copyright (C) 2011-2023 Brian Simpson
+ * Copyright (C) 2011-2024 Brian Simpson
  * This file is part of Night Vision.
  *
  * Night Vision is free software: you can redistribute it and/or modify
@@ -299,10 +299,12 @@ public class Nutate implements Cloneable {
   public void adjustEclipForAberration(double[] lambda, double[] beta) {
     // Formula on P. 151
     //stem.out.println("Sun long = " + (LSun / D2R) + " degrees");
-    lambda[0] += k * (ec * Math.cos(pi - lambda[0]) -
-                      Math.cos(LSun - lambda[0])) / Math.cos(beta[0]);
-    beta[0]   += k * (ec * Math.sin(pi - lambda[0]) -
-                      Math.sin(LSun - lambda[0])) * Math.sin(beta[0]);
+    double pi_lambda = pi - lambda[0];
+    double LSun_lambda = LSun - lambda[0];
+    lambda[0] += k * (ec * Math.cos(pi_lambda) -
+                      Math.cos(LSun_lambda)) / Math.cos(beta[0]);
+    beta[0]   -= k * Math.sin(beta[0]) * (Math.sin(LSun_lambda) -
+                     ec * Math.sin(pi_lambda));
   }
 
   /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
@@ -317,19 +319,12 @@ public class Nutate implements Cloneable {
     //stem.out.println("Sun long = " + (LSun / D2R) + " degrees");
     double lambda = sc.getLambda();
     double beta   = sc.getBeta();
-    sc.set(lambda + k * (ec * Math.cos(pi - lambda) -
-                         Math.cos(LSun - lambda)) / Math.cos(beta),
-           beta   + k * (ec * Math.sin(pi - lambda) -
-                         Math.sin(LSun - lambda)) * Math.sin(beta));
-    // For debugging
-    //stem.out.println("LSun = " + (LSun * 180 / Math.PI) + " degrees");
-    //stem.out.println("e = " + (ep0 + dep));
-    //stem.out.println("ec = " + ec);
-    //stem.out.println("pi = " + (pi * 180 / Math.PI) + " degrees");
-    //stem.out.println("DLambda = " + (( k * (ec * Math.cos(pi - lambda) -
-    //Math.cos(LSun - lambda))/Math.cos(beta)) * 648000/Math.PI) + " seconds");
-    //stem.out.println("DBeta   = " + ((k * (ec * Math.sin(pi - lambda) -
-    //Math.sin(LSun - lambda))*Math.sin(beta)) * 648000/Math.PI) + " seconds");
+    double pi_lambda = pi - lambda;
+    double LSun_lambda = LSun - lambda;
+    sc.set(lambda + k * (ec * Math.cos(pi_lambda) -
+                         Math.cos(LSun_lambda)) / Math.cos(beta),
+           beta   - k * Math.sin(beta) * (Math.sin(LSun_lambda) -
+                        ec * Math.sin(pi_lambda)));
   }
 
   /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->

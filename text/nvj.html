@@ -8,9 +8,9 @@
 <center>
 <h1>N i g h t &nbsp;&nbsp; V i s i o n</h1>
 <br>
-Version 5.3
+Version 5.4
 <br>
-Copyright (C) &nbsp; B. Simpson 2023
+Copyright (C) &nbsp; B. Simpson 2024
 <br>
 Astronomy program for your computer
 </center>
@@ -22,9 +22,9 @@ user to control which sky objects to display, which font to use, and
 manipulation of various star parameters.  Time may be set to run at
 multiple speeds, including backwards.  Color star charts may be printed.
 
-<p>Because this program is written in Java, it can run on any computer
-with a recent version of Java installed (includes most computers -
-see requirements below).
+<p>This program is written in Java and requires a Java Runtime Environment,
+which is embedded within some of the <b>Night Vision</b> installation packages,
+or can be pre-installed (and may be already on your computer).
 
 <p><hr><!---------------------------------------------------------------------->
 <h2>Night Vision on the Internet</h2>
@@ -70,11 +70,12 @@ http://www.gnu.org/licenses/gpl-3.0-standalone.html</a>.
 <p><hr><!---------------------------------------------------------------------->
 <h2>Requirements</h2>
 
-<p><b>Night Vision</b> should run on any computer that contains a recent
-Java Runtime Environment (Java 8 or later). Most computers sold in
-recent years meet this requirement. (In the unlikely event that yours
-does not, the Java software can be downloaded
-<a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">
+<p><b>Night Vision</b> is written in Java and requires a Java Runtime
+Environment (JRE) which is embedded in some of the <b>Night Vision</b>
+installation packages.  It can also run with a JRE already (pre-installed) on
+your computer (Java 8 or later), in which case an installation package without
+Java can be selected.  (If needed, Java software can be downloaded
+<a href="https://www.java.com">
 online</a>.)
 
 <p><hr><!---------------------------------------------------------------------->
@@ -95,6 +96,7 @@ and issue the following command from a command window in that directory:
 </pre>
 
 <p>Java is case sensitive, so type the command exactly as shown.
+(In this case the Java Runtime Environment must be pre-installed.)
 
 <p>On some systems (e.g. Windows) users can double click the left mouse
 button on the nvj.jar file icon to start the program.
@@ -205,6 +207,11 @@ include:
 <h2>History</h2>
 
 <table cellpadding=5>
+<tr><!-------------------------->
+<td nowrap valign=top>5.4
+<td>Embedding the Java Runtime Environment into several installable packages,
+removing the need to have Java installed beforehand.  Accuracy
+enhancements - leap year table and aberration correction.
 <tr><!-------------------------->
 <td nowrap valign=top>5.3
 <td>Extended lower end of date range to 10 BC (previously 1000 AD).  (Note:

@@ -1,6 +1,6 @@
 /*
  * DeltaT.java  -  Determines delta t (= TT - UT)
- * Copyright (C) 2011-2023 Brian Simpson
+ * Copyright (C) 2011-2024 Brian Simpson
  * This file is part of Night Vision.
  *
  * Night Vision is free software: you can redistribute it and/or modify
@@ -20,53 +20,46 @@
 
 package com.nvastro.nvj;
 
-// NumberFormat (used in main)
+//import java.text.NumberFormat; (used in main)
+//import java.text.DecimalFormat; (used in main)
 
 
 /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
  * Determines delta t (= TT - UT).
  * <p>
- * For years between 1620 and 2014
- * (last few years are (wild) guesses), table from
- * http://www.phys.uu.nl/~vgent/astro/deltatime.htm
- * is used (adjusted for lunar acceleration = -25.7376 arcsec/cy/cy),
- * with Bessel Interpolation for intermediate values.
+ * Methods from "Astronomical Algorithms" 2nd Ed. by Jean Meeus
+ * (c) 1998, second printing March 2000 by Willmann-Bell, Inc.
+ * <p>
+ * The deltat table (below) is from
+ * https://webspace.science.uu.nl/~gent0113/deltat/deltat_modern.htm
  * This table agrees very closely with table from Jean Meeus'
- * Astronomical Algorithms (2nd ed. 1998) in 1900s, and diverges to
- * only 3 seconds at 1620 (most likely due to slightly different
+ * Astronomical Algorithms (2nd ed. 1998, P. 79) in 1900s, and diverges
+ * to only 3 seconds at 1620 (most likely due to slightly different
  * lunar acceleration).
  * <p>
- * Values before 1620 use a formula from JPL Horizons (according to
- * above website, and derived from Stephenson &amp; Houlden (1986)),
- * since it closely matches table value at 1620.  (Small adjustment is
- * made between years 1600 - 1620 to get an exact match at 1620.)
+ * Bessel Interpolation is used for intermediate values.
  * <p>
- * Values after 2014 use formula from Jean Meeus' Astronomical Algorithms
- * (2nd ed. 1998), from Chapront, Chapront-Touz&eacute;, &amp; Francou (1997).
- * Adjustments are made through year 2100 for smooth transition at 2014.
- * <p>
- * Values before 948 use formula from Jean Meeus' Astronomical Algorithms
- * (2nd ed. 1998), from Chapront, Chapront-Touz&eacute;, &amp; Francou (1997).
+ * Values before 948 use formula from Jean Meeus' book (P. 78).
  * Small change done to constant term to get exact match to succeeding
  * formula at 948.
+ * <p>
+ * Values beteen 948-1620 use a formula from JPL Horizons (according
+ * to above website, and derived from Stephenson &amp; Houlden (1986)),
+ * since it closely matches table value at 1620.  (Small adjustment is
+ * made between years 1600 - 1620 to get an exact match at 1620.)
+ * (Formula in Meeus' book diverged by over 40 seconds at 1620.)
+ * <p>
+ * Values after 2024 use formula from Jean Meeus' book (P. 78).
+ * Constant term reduced for smooth transition at 2024.
+ * <p>
+ * Other websites of interest
+ * https://maia.usno.navy.mil/ser7/deltat.data - DeltaT Table
+ * https://maia.usno.navy.mil/ser7/tai-utc.dat - Leap Second Table
+ * https://eclipse.gsfc.nasa.gov/SEcat5/deltatpoly.html - Complex
  *
  * @author Brian Simpson
  */
 public class DeltaT {
-  // Web sources for data and methods
-  // http://www.phys.uu.nl/~vgent/astro/deltatime.htm (temp. unavailable,
-  //   see http://www.phys.uu.nl/~vgent/homepage.htm)
-  // ftp://maia.usno.navy.mil/ser7/finals.all
-  // ftp://maia.usno.navy.mil/ser7/readme.finals
-  // http://maia.usno.navy.mil/ser7/tai-utc.dat  - Leap Second Table
-  // http://sunearth.gsfc.nasa.gov/eclipse/SEhelp/deltaT.html
-  // http://sunearth.gsfc.nasa.gov/eclipse/SEhelp/deltaT2.html
-  // http://baas.lamost.org/calc/matlab/deltat.m
-  // http://www.lunar-occultations.com/iota/occultdeltaat.htm
-  // http://user.online.be/felixverbelen/dt.htm
-  // http://www.maths.abdn.ac.uk/~igc/tch/engbook/node64.html
-  // http://home.att.net/~srschmitt/bessel_interpolation.html
-
   /* <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
    * No constructor available.
    */
@@ -79,8 +72,7 @@ public class DeltaT {
    * @return DeltaT in seconds
    */
   static public double calcDeltaT(double julian) {
-    // Look at Meeus book and above formulas to discern
-    // some method to this madness...
+    // Look at Meeus book and above formulas for methodology
     double u, d;
     double Y = 2000 + (julian - 2451545) / 365.25;
     // Y is derived from the Julian day and represents the calendar year.
@@ -91,22 +83,9 @@ public class DeltaT {
     if ( ! Preferences.usedeltat ) return 0;
 
     if ( Y >= YSTOP ) {
-      // No matter what I do here it's pure fantasy
-      // The following is an abandoned method...
-      //u = Y - YSTOP;
-      //int p = dt[dtlength-1] - dt[dtlength-2];
-      //d = (dt[dtlength-101] - (dt[dtlength-1] - 100 * p)) * 1e-4;
-      //d = 0.01 * (dt[dtlength-1] + u * (p + u * d));
-
       u = (Y - 2000) / 100.0;
-      d = 102 + u * (102 + u * 25.3);
-
-      // Allow to 2100 to smooth large transition
-      if ( Y < 2100 ) {
-        u = (YSTOP - 2000) / 100.0;
-        d += ((Y - 2100)/(YSTOP - 2100)) *
-             (dt[dtlength-1]/100.0 - (102 + u * (102 + u * 25.3)));
-      }
+      // Constant term reduced for smooth transition at YSTOP
+      d = 43.2427 + u * (102.0 + u * 25.3);
     }
     else if ( Y < 948 ) {
       u = (Y - 2000) / 100.0;
@@ -124,7 +103,7 @@ public class DeltaT {
              (dt[0]/100.0 - (50.6 + u * (67.5 + u * 22.5)));
       }
     }
-    else { // YSTOP <= Y < YSTOP
+    else { // YSTART <= Y < YSTOP
       int x = (int)Y - YSTART;   // (always >= 0)
       u = Y - (int)Y;            // 0 <= u < 1  (fractional year)
       d = dt[x] + u * (d1[x] + u * (d2[x] + u * (d3[x] + u * d4[x])));
@@ -175,6 +154,7 @@ public class DeltaT {
   //    System.out.println(yr_fmt.format(Y) + " - " +
   //                       yr_fmt.format(calcDeltaT(j)));
   //  }
+  //  //stem.out.println("\nBessel");
   //  //stem.out.println("0: " + d1[0] + ", " + d2[0] +
   //  //                  ", " + d3[0] + ", " + d4[0]);
   //  //stem.out.println("1: " + d1[1] + ", " + d2[1] +
@@ -226,37 +206,20 @@ public class DeltaT {
      4018,  4117,  4223,  4337,  4449,  4548,  4646,  4752,  4853,  4959,
      5054,  5138,  5217,  5296,  5379,  5434,  5487,  5532,  5582,  5630,
      5686,  5757,  5831,  5912,  5998,  6078,  6163,  6229,  6297,  6347,
-    // 2000 - 2014 (2010 - 2014 are (wild) guesses)
+    // 2000 - 2024
      6383,  6409,  6430,  6447,  6457,  6469,  6485,  6515,  6546,  6578,
-     6607,  6632,  6700,  6840,  7000
+     6607,  6632,  6660,  6691,  6728,  6764,  6810,  6859,  6897,  6922,
+     6936,  6936,  6929,  6920,  6918
   };
   static final private int dtlength = dt.length;
   static final private int YSTART = 1620;
-  static final private int YSTOP  = YSTART + dtlength - 1;  // (2014)
+  static final private int YSTOP  = YSTART + dtlength - 1;  // (2024)
   static final private double[] d1 = new double[dtlength-1];
   static final private double[] d2 = new double[dtlength-1];
   static final private double[] d3 = new double[dtlength-1];
   static final private double[] d4 = new double[dtlength-1];
   static {
     int i;
-    double u;
-
-    // - May want to change table values before 1955.5 -
-    // (See http://www.phys.uu.nl/~vgent/astro/deltatime.htm)
-    // Table values before 1955.5 were reduced with Brown’s lunar theory with
-    // an adopted lunar acceleration parameter (n') of -26.0 arcsec/cy/cy.
-    // For other values of the lunar acceleration parameter, the values listed
-    // above before 1955.5 should be corrected by:
-    //   dt_new(centisec) = dt_old(centisec) - 91.072 * (n' + 26.0) * u^2
-    // with u = (year - 1955.5)/100, or the time measured in centuries since
-    // 1 July 1955.  Values after 1955.5 remain unchanged as they were obtained
-    // from observations that were compared directly against Atomic Time (TAI).
-    // (E.g. if n' = 25.8 and year = 1620, new dt[0] = 12400 - 205 = 12195)
-    // Use n' = -25.7376 arcsec/cy/cy
-    for ( i = 0; i <= 1955 - YSTART; i++ ) {
-      u = (YSTART + i - 1955.5)/100;
-      dt[i] -= 23.8973 * u * u;
-    }
 
     for ( i = 0; i < dtlength-1; i++ ) // 1st differences
       d1[i] = dt[i+1] - dt[i];
@@ -361,8 +324,8 @@ of 2000s) the following expression holds:
   TT = UTC + 64.184s
 Thus J2000.0 (1-1-2000 12.0 TT) occurred at 1-1-2000 11:58:55.816 UTC.
 
-From 1-1-2006 (last leap second) to whenever the next leap second is added
-(none so far as of 1-17-2008), the following expression holds:
+From 1-1-2006 (last leap second in book) to whenever the next leap second
+is added the following expression holds:
   TT = UTC + 65.184s
 
 TT = UT1 + deltaT = UTC + deltaUT1 + deltaT
@@ -423,33 +386,9 @@ Leap second table
  1999 JAN 1
  2006 JAN 1
  2009 JAN 1
-
-Table generation
-----------------
-
-Extract column "Bull. A UT1-UTC" or "Bull. B UT1-UTC" for
-Jan 1 from ftp://maia.usno.navy.mil/ser7/finals.all  (columns
-defined in ftp://maia.usno.navy.mil/ser7/readme.finals).
-Not sure which column is preferred, but they agree closely.
-Fill in the following sequence:
-
-1999:  64.184 -  .717 = 63.467    x 100 ~= 6347
-2000:  64.184 -  .354 = 63.830    x 100 ~= 6383
-2001:  64.184 -  .093 = 64.091    x 100 ~= 6409
-2002:  64.184 - -.116 = 64.300    x 100 ~= 6430
-2003:  64.184 - -.289 = 64.473    x 100 ~= 6447
-2004:  64.184 - -.390 = 64.574    x 100 ~= 6457
-2005:  64.184 - -.504 = 64.688    x 100 ~= 6469
-
-2006:  65.184 -  .339 = 64.845    x 100 ~= 6485
-2007:  65.184 -  .038 = 65.146    x 100 ~= 6515
-2008:  65.184 - -.273 = 65.457    x 100 ~= 6546
-
-2009:  66.184 -  .407 = 65.777    x 100 ~= 6578
-2010:  66.184 -  .114 = 66.070    x 100 ~= 6607
-2011:  66.184 - -.141 = 66.325    x 100 ~= 6632
-
-The right hand column goes into the dt array above.
+ 2012 JUL 1
+ 2015 JUL 1
+ 2017 JAN 1
 
 ------------------------------------------------------------------------------*/
 

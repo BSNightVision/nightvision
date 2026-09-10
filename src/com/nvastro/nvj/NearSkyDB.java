@@ -1,6 +1,6 @@
 /*
  * NearSkyDB.java  -  Near sky object database and methods
- * Copyright (C) 2011-2023 Brian Simpson
+ * Copyright (C) 2011-2024 Brian Simpson
  * This file is part of Night Vision.
  *
  * Night Vision is free software: you can redistribute it and/or modify
@@ -36,14 +36,14 @@ import java.util.Vector;
 /* (c) 1998, second printing March 2000 by Willmann-Bell, Inc.  */
 
 /*------------------------------------------------------------------------------
-Precise definition of J2000.0 (found at http://www.answers.com/topic/j2000-0):
+Precise definition of J2000.0 (found at https://www.answers.com/topic/j2000-0):
 "It is precisely Julian date 2451545.0 TT, or January 1 2000, 12h TT.
 This is equivalent to January 1 2000, 11:59:27.816 TAI or
 January 1 2000, 11:58:55.816 UTC."    (Delta T = 64.184 seconds)
 ------------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------------
-ICRS (& ICRF) vs FK5 (from http://aa.usno.navy.mil/faq/docs/ICRS_doc.html):
+ICRS (& ICRF) vs FK5 (from https://aa.usno.navy.mil/faq/ICRS_doc):
 "The orientation of the ICRS axes is consistent with the equator and equinox
 of J2000.0 represented by the FK5, within the errors of the latter. Since,
 at J2000.0, the errors of the FK5 are significantly worse than those of
@@ -54,7 +54,7 @@ the ICRS will be transparent to any applications with accuracy requirements
 of no better than 0.1 arcseconds near epoch J2000.0. That is, for applications
 of this accuracy, the distinctions between the ICRS, FK5, and dynamical equator
 and equinox of J2000.0 are not significant."
-More info (from http://www.iers.org/iers/products/icrf/):
+More info (from https://www.iers.org/IERS/EN/DataProducts/ICRF/icrf.html):
 "The International Celestial Reference Frame (ICRF) realizes an ideal reference
 system, the International Celestial Reference System (ICRS), by precise
 equatorial coordinates of extragalactic radio sources observed in Very Long
@@ -186,8 +186,10 @@ public class NearSkyDB {
     if ( JDate != j || loc != mp.lst.getLocation() ) {
       JDate = j;
       Planet.Earth.calcHelioCentricCoord(t, l, b, r);
+      //stem.out.println("earth t = " + t);
       //stem.out.println("earth l = " + (l[0] / D2R) + " degrees");
       //stem.out.println("earth b = " + (b[0] / D2R) + " degrees");
+      //stem.out.println("earth r = " + (r[0] ) + " AU");
       L = l[0];  B = b[0];  R = r[0];
       double cosB = Math.cos(B);
       RcosBcosL = R * cosB * Math.cos(L);
@@ -290,38 +292,18 @@ public class NearSkyDB {
     }
 
     // Adjust for parallax
-    adjustMoonForParallax(ra, dec, dist);
+    adjustForParallax(ra, dec, dist);
     if ( ! app ) mp.unPrecessNutate(ra, dec);           // Convert to J2000
   }
 
-  ///* <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  // * Adjusts geocentric coordinates into topocentric coordinates. (P. 279)
-  // *
-  // * @param ra Input: RA before adjust; Output: RA after adjust
-  // * @param dec Input: Declination before adjust; Output: Dec after adjust
-  // * @param dist Distance in AU
-  // */
-  //private void adjustForParallax(double[] ra, double[] dec, double dist) {
-  //  if ( geocentric ) { return; }
-  //  double sinpi = PAR / dist;
-  //  //stem.out.println("pi = " + (Math.asin(sinpi) / D2R));
-  //  double hrangle = lstrad - ra[0]; // Hour angle in radians
-  //  //stem.out.println("hrangle = " + (hrangle / D2R));
-  //  double coshrangle = Math.cos(hrangle);
-  //  double cosdelta = Math.cos(dec[0]);
-  //  double dalpha = Math.atan2(-rhocosphip * sinpi * Math.sin(hrangle),
-  //         cosdelta - rhocosphip * sinpi * coshrangle);
-  //  ra[0] += dalpha;
-  //  //stem.out.println("dalpha = " + (dalpha * / S2R));
-  //  dec[0] = Math.atan2(Math.cos(dalpha) *
-  //           (Math.sin(dec[0]) - rhosinphip * sinpi),
-  //           cosdelta - rhocosphip * sinpi * coshrangle);
-  //}
-
-  /* <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-   * See previous functions for comments.
+  /* <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+   * Adjusts geocentric coordinates into topocentric coordinates. (P. 279)
+   *
+   * @param ra Input: RA before adjust; Output: RA after adjust
+   * @param dec Input: Declination before adjust; Output: Dec after adjust
+   * @param dist Distance in AU
    */
-  private void adjustMoonForParallax(double[] ra, double[] dec, double[] dist) {
+  private void adjustForParallax(double[] ra, double[] dec, double[] dist) {
     if ( geocentric ) { return; }
     double sinpi = PAR / dist[0];
     //stem.out.println("pi = " + (Math.asin(sinpi) / D2R));
@@ -334,7 +316,7 @@ public class NearSkyDB {
     double dalpha = Math.atan2(-rhocosphip * sinpi * sinhrangle,
            cosdelta - rhocosphip * sinpi * coshrangle);
     ra[0] += dalpha;
-    //stem.out.println("dalpha = " + (dalpha * / S2R));
+    //stem.out.println("dalpha = " + (dalpha / S2R));
     dec[0] = Math.atan2(Math.cos(dalpha) *
              (sindelta - rhosinphip * sinpi),
              cosdelta - rhocosphip * sinpi * coshrangle);
@@ -402,7 +384,7 @@ public class NearSkyDB {
    * @param mp Mapping parameters (For Saturn only - need Julian day)
    * @param sc SphereCoords of planet (RA,Dec - for Saturn only)
    */
-  private String getPlanetMag(int object, double edist, double sdist,
+  private String tellPlanetMag(int object, double edist, double sdist,
                               MapParms mp, SphereCoords sc) {
     double sedist = sdist * edist;
     double i = (sdist * sdist + edist * edist - R * R) / (2 * sedist);
@@ -455,12 +437,13 @@ public class NearSkyDB {
   }
 
   /* <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-   * Returns angular size in seconds.  (Chapter 55)
+   * Returns angular size as a String.  (Chapter 55)
    *
-   * @param object Planet number (M=0 V=1 M=2 J=3 S=4 U=5 N=6 P=7 S=8 M=9)
+   * @param object Near sky number (M=0 V=1 M=2 J=3 S=4 U=5 N=6 P=7 S=8 M=9)
    * @param dist Distance from earth in AUs
+   * @return Angular size as a String
    */
-  private String getAngularSize(int object, double dist) {
+  private String tellAngularSize(int object, double dist) {
     double s = 0.0;
 
     switch ( object ) {
@@ -672,7 +655,7 @@ public class NearSkyDB {
       }
       else {                   // Planet
         str.append(IdentifyDlg.MAG +
-                   getPlanetMag(close, distance, sundist, mp, radec) + "\n");
+                   tellPlanetMag(close, distance, sundist, mp, radec) + "\n");
       }
 
       str.append(IdentifyDlg.DIST);
@@ -684,7 +667,7 @@ public class NearSkyDB {
 
       // Add Angular size
       str.append(IdentifyDlg.ANGSZ);
-      str.append(getAngularSize(close, distance) + "\n");
+      str.append(tellAngularSize(close, distance) + "\n");
     }
     return close;
   }
@@ -896,6 +879,7 @@ public class NearSkyDB {
   //  double[] dist  = new double[1];
   //  double[] sdist = new double[1];
   //  Preferences prefer = new Preferences();
+  //  Preferences.usedeltat = false;  // Delta T = 0
   //  GregorianCalendar gc = prefer.lst.getLocDateTime();
   //  gc.setTimeZone(TimeZone.getTimeZone("GMT"));  // "GMT" is a misnomer
   //  gc.clear(); // Clear time fields
@@ -905,7 +889,6 @@ public class NearSkyDB {
   //  MapParms mp = new MapParms(prefer);
   //  mp.update(new Dimension(100, 100), 100.0); // Bogus numbers
   //  geocentric = true;  // Do Geocentric analysis
-  //  Preferences.usedeltat = false;  // Delta T = 0
   //  // 2448908.5 = 1992 October 13.0 TT (Terrestrial Time)
   //  // 2448976.5 = 1992 December 20.0 TT (for Venus - P. 225-227)
   //  // 2448724.5 = 1992 April 12.0 TT (for Moon - P. 342-343)
@@ -938,6 +921,9 @@ public class NearSkyDB {
   //    System.out.println("RA   = " + (ra[0] / D2R) + " degrees");
   //    System.out.println("Dec  = " + (dec[0] / D2R) + " degrees");
   //    System.out.println(sc.tellRAHrMnScT() + ", " + sc.tellDecDgMnSc());
+  //    System.out.println("Angular size = " + db.tellAngularSize(i, dist[0]));
+  //    if ( i < 8 ) System.out.println("Mag  = " +
+  //	             db.tellPlanetMag(i, dist[0], sdist[0], mp, sc));
   //
   //    db.getCoordinates(i, mp, false, ra, dec, dist, sdist); // J2000
   //    sc.set(ra[0], dec[0]);

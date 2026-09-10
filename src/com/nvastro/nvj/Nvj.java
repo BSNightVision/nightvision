@@ -1,6 +1,6 @@
 /*
  * Nvj.java  -  Main frame window and starting point for Night Vision
- * Copyright (C) 2011-2023 Brian Simpson
+ * Copyright (C) 2011-2024 Brian Simpson
  * This file is part of Night Vision.
  *
  * Night Vision is free software: you can redistribute it and/or modify
@@ -98,10 +98,10 @@ public class Nvj extends JFrame implements ActionListener,
   /** Program name */
   static final public  String PgmName = "Night Vision";
   /** Program version */
-  static final public  String PgmVersion = "5.3";
+  static final public  String PgmVersion = "5.4";
   static final private String PgmInfo = "N i g h t   V i s i o n\n\n" +
                                         "Version " + PgmVersion + "\n\n" +
-                                        "Copyright (C) B. Simpson 2023\n\n" +
+                                        "Copyright (C) B. Simpson 2024\n\n" +
                                         "A Planetarium for your Computer";
   static final private String Append = TextBndl.getString("PrdInfDlg.Append");
   static final private String PgmInfo2 = (Append.length() > 0) ?

@@ -1,8 +1,8 @@
 Night Vision source files
 -------------------------
 
-Night Vision may be examined and built with the source files included
-in this directory.
+Night Vision may be examined and built with the source files that
+have been included in the source file package that includes this file.
 
 Required for building NV is the Java Development Kit (minimum
 version 8):
@@ -11,7 +11,8 @@ and the Apache Ant build tool:
   https://ant.apache.org/bindownload.cgi
 
 With Java and Ant installed, all that is needed to compile and run NV
-is to issue the following command from this directory:
+is to issue the following command from the directory in the package
+that includes this file:
 
   ant run
 
@@ -19,9 +20,16 @@ This will utilize the compile and build instructions within the
 build.xml file included in this directory.
 
 
+Not included in this package are the files and the InstallBuilder
+executable that are necessary to build an installable package.
+The NV author was issued a personal open source license that 
+may only be used for Night Vision.  InstallBuilder is available
+at https://installbuilder.com.
+
+
 NV began as a program for the OS/2 operating system.  Around the
 year 2000 conversion to Java began.  After conversion was complete
-a number of new features have been added, and now (as of November 2023)
+a number of new features have been added, and now (as of November 2024)
 NV comprises 69 Java source files.  Some comments on the Java source:
 - There were many problems encountered in the Java compilers at
   the time the earliest NV source files were written.  Many of the

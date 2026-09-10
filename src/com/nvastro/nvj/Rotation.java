@@ -1,6 +1,6 @@
 /*
  * Rotation.java  -  Rotations for Prec, Nut, LST, Lat, Az, Alt, and Fld Rot.
- * Copyright (C) 2011-2023 Brian Simpson
+ * Copyright (C) 2011-2024 Brian Simpson
  * This file is part of Night Vision.
  *
  * Night Vision is free software: you can redistribute it and/or modify
@@ -75,6 +75,25 @@ public class Rotation extends Nutate implements Cloneable {
   *                                                                      *
   ***********************************************************************/
 
+  /*+*********************************************************************
+  * To use an instance of this class, call the following functions       *
+  * to set up various component matrices:                                *
+  *                                                                      *
+  *   setJDay(...)                                                       *
+  *   setLSTHrs(...)                                                     *
+  *   setLatDeg(...)                                                     *
+  *   setAzRad(...)                                                      *
+  *   setAltRad(...)                                                     *
+  *   setFldDeg(...)                                                     *
+  *                                                                      *
+  * then call:                                                           *
+  *                                                                      *
+  *   reCalc(...)                                                        *
+  *                                                                      *
+  * to set up the remaining matrices.                                    *
+  *                                                                      *
+  ***********************************************************************/
+
   private Matrix3x3 prec, lst, lat, az, alt, fld, falt, vwop, ntpr, view,
                     unpn, ll, unll;
   // (Nutation matrix is in superclass)
@@ -129,6 +148,7 @@ public class Rotation extends Nutate implements Cloneable {
    *
    * @param jday Julian day
    */
+  @Override
   public void setJDay(double jday) {
     super.setJDay(jday);  // Sets nutation
     double t = (jday - J2000_0) / 36525;
@@ -354,5 +374,69 @@ public class Rotation extends Nutate implements Cloneable {
     if ( ra < 0 ) ra += TwoPI;                 /* ra between 0 and 2 pi */
     rd.set(ra, dec);
   }
+
+  /* For testing */
+  //static public void main(String[] args) {
+  //  Rotation rot = new Rotation();
+  //  rot.setJDay(37000.0);
+  //  rot.setLSTHrs(12.0);
+  //  rot.setLatDeg(40.0);
+  //  rot.setAzRad(HalfPI);
+  //  rot.setAltRad(Math.PI);
+  //  rot.setFldDeg(90);
+  //
+  //  rot.reCalc(true); // RA-Dec mode
+  //  System.out.println("True:");
+  //  for ( int i = 0; i < 3; i++ ) {
+  //  	for ( int j = 0; j < 3; j++ ) {
+  //  		System.out.print("  " + rot.view.num[i][j]);
+  //  	}
+  //  	System.out.println();
+  //  }
+  //  System.out.println();
+  //  for ( int i = 0; i < 3; i++ ) {
+  //  	for ( int j = 0; j < 3; j++ ) {
+  //  		System.out.print("  " + rot.vwop.num[i][j]);
+  //  	}
+  //  	System.out.println();
+  //  }
+  //  System.out.println();
+  //  for ( int i = 0; i < 3; i++ ) {
+  //  	for ( int j = 0; j < 3; j++ ) {
+  //  		System.out.print("  " + rot.unpn.num[i][j]);
+  //  	}
+  //  	System.out.println();
+  //  }
+  //
+  //  rot.reCalc(false); // Az-Alt mode
+  //  System.out.println("\nFalse:");
+  //  for ( int i = 0; i < 3; i++ ) {
+  //  	for ( int j = 0; j < 3; j++ ) {
+  //  		System.out.print("  " + rot.view.num[i][j]);
+  //  	}
+  //  	System.out.println();
+  //  }
+  //  System.out.println();
+  //  for ( int i = 0; i < 3; i++ ) {
+  //  	for ( int j = 0; j < 3; j++ ) {
+  //  		System.out.print("  " + rot.vwop.num[i][j]);
+  //  	}
+  //  	System.out.println();
+  //  }
+  //  System.out.println();
+  //  for ( int i = 0; i < 3; i++ ) {
+  //  	for ( int j = 0; j < 3; j++ ) {
+  //  		System.out.print("  " + rot.unll.num[i][j]);
+  //  	}
+  //  	System.out.println();
+  //  }
+  //  
+  //  SphereCoords rd = new SphereCoords(Math.PI, HalfPI);
+  //  SphereCoords aa = new SphereCoords(0.0, 0.0);
+  //  rot.rd2aa(rd, aa);
+  //  System.out.println("\naa: " + aa.getAz() + " " + aa.getAlt());
+  //  rot.aa2rd(aa, rd);
+  //  System.out.println("rd: " + rd.getRA() + " " + rd.getDec());
+  //}
 }
 
