@@ -1,6 +1,6 @@
 /*
  * Preferences.java  -  User preferences
- * Copyright (C) 2011-2023 Brian Simpson
+ * Copyright (C) 2011-2026 Brian Simpson
  * This file is part of Night Vision.
  *
  * Night Vision is free software: you can redistribute it and/or modify
@@ -99,11 +99,10 @@ public class Preferences extends View implements Cloneable {
   private int updatePeriod;
   private int zoLimMag10, ziLimMag10, szBright, szDim;
   private int zoDSLimMag10, ziDSLimMag10;
-  private boolean bmpStars;
   private int winLt, winTp, winWd, winHt;
   private int ssLt, ssTp, ssWd, ssHt;
   private boolean ssShowScrl, ssShowTime;
-  private Color clrBackGnd, clrConst, clrConstBound, clrStar, clrStarName,
+  private Color clrBackGnd, clrConst, clrConstBound, clrStarName,
     clrDeepSky, clrCGrid, clrAGrid, clrEcliptic, clrHorizon, clrSun,
     clrPlanet, clrMoon, clrMilkyWay;
   private Color pclrBackGnd, pclrConst, pclrConstBound, pclrStar, pclrStarName,
@@ -168,7 +167,6 @@ public class Preferences extends View implements Cloneable {
   private final static String keyBackGndClr = "BackGndColor";
   private final static String keyConstClr = "ConstColor";
   private final static String keyConstBoundClr = "ConstBoundColor";
-  private final static String keyStarClr = "StarColor";
   private final static String keyStarNameClr = "StarNameColor";
   private final static String keyDeepSkyClr = "DeepSkyColor";
   private final static String keyCGridClr = "CGridColor";
@@ -218,7 +216,6 @@ public class Preferences extends View implements Cloneable {
   private final static String keyZiLimMag10 = "ZiLimMag10";
   private final static String keySzBright = "StarSizeBright";
   private final static String keySzDim = "StarSizeDim";
-  private final static String keyStarOld = "StarOld";
   private final static String keyZoDSLimMag10 = "ZoDSLimMag10";
   private final static String keyZiDSLimMag10 = "ZiDSLimMag10";
   private final static String keyUpdtPer = "UpdatePeriod";
@@ -331,7 +328,6 @@ public class Preferences extends View implements Cloneable {
     clrBackGnd     = Initor.getColor(keyBackGndClr, Color.black);
     clrConst       = Initor.getColor(keyConstClr, new Color(91,91,103));
     clrConstBound  = Initor.getColor(keyConstBoundClr, new Color(0,80,120));
-    clrStar        = Initor.getColor(keyStarClr, Color.white);
     clrStarName    = Initor.getColor(keyStarNameClr, new Color(153,255,153));
     clrDeepSky     = Initor.getColor(keyDeepSkyClr, new Color(255,204,204));
     clrCGrid       = Initor.getColor(keyCGridClr, new Color(0,71,71));
@@ -372,10 +368,9 @@ public class Preferences extends View implements Cloneable {
 
     zoLimMag10     = Initor.getInt(keyZoLimMag10, 60);  // 6th mag for now...
     ziLimMag10     = Initor.getInt(keyZiLimMag10, 110); // 11th mag for now...
-    szBright       = Initor.getInt(keySzBright, StarImages.NUMIMAGES-2);
+    szBright       = Initor.getInt(keySzBright, StrPrmDlg.NUMIMAGES-2);
     szDim          = Initor.getInt(keySzDim, 1);
     setSzStar(szBright, szDim);
-    bmpStars       = Initor.getBoolean(keyStarOld, false); // Old (bitmap) stars
     zoDSLimMag10   = Initor.getInt(keyZoDSLimMag10, 70); // 6th mag for now...
     ziDSLimMag10   = Initor.getInt(keyZiDSLimMag10,120); // 12th mag for now...
     updatePeriod   = Initor.getInt(keyUpdtPer, 60); // Dft 60 seconds
@@ -726,10 +721,6 @@ public class Preferences extends View implements Cloneable {
   public Color   colorConstBound() { return clrConstBound; }
   /** @param c Window constellation boundary color */
   public void    colorConstBound(Color c) { clrConstBound = c; }
-  /** @return Window star color */
-  public Color   colorStar() { return clrStar; }
-  /** @param c Window star color */
-  public void    colorStar(Color c) { clrStar = c; }
   /** @return Window star name color */
   public Color   colorStarName() { return clrStarName; }
   /** @param c Window star name color */
@@ -914,11 +905,9 @@ public class Preferences extends View implements Cloneable {
    * @param dim Star image number for dimmest displayed stars */
   public void setSzStar(int bright, int dim) {
     /* 1 <= szDim <= szBright <= NUMIMAGES */
-    szDim    = Math.max(1,     Math.min(dim,    StarImages.NUMIMAGES));
-    szBright = Math.max(szDim, Math.min(bright, StarImages.NUMIMAGES));
+    szDim    = Math.max(1,     Math.min(dim,    StrPrmDlg.NUMIMAGES));
+    szBright = Math.max(szDim, Math.min(bright, StrPrmDlg.NUMIMAGES));
   }
-  /** @return Use (old-style) bitmap stars (undocumented) */
-  public boolean getBmpStars() { return bmpStars; }
   /** @return 10X zoomed-out deep sky limiting magnitude */
   public int getZoDSLimMag10() { return zoDSLimMag10; }
   /** @param m 10X zoomed-out deep sky limiting magnitude */

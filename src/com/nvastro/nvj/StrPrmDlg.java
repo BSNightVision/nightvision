@@ -1,6 +1,6 @@
 /*
  * StrPrmDlg.java  -  "Set star parameters" dialog
- * Copyright (C) 2011-2023 Brian Simpson
+ * Copyright (C) 2011-2026 Brian Simpson
  * This file is part of Night Vision.
  *
  * Night Vision is free software: you can redistribute it and/or modify
@@ -29,7 +29,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Image;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
@@ -45,7 +44,6 @@ import javax.swing.JSlider;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-// Ellipse2D
 
 
 /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
@@ -62,6 +60,8 @@ public class StrPrmDlg extends EscapeDlg implements ChangeListener {
   private ActionListener listeners = null;
   private Preferences prefer;
   static private StrPrmDlg dlg = null;
+  static private Color StarColor = Color.WHITE;
+  public final static int NUMIMAGES = 11; // Number of star images in window
 
   /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
    * Shows the dialog.
@@ -122,8 +122,8 @@ public class StrPrmDlg extends EscapeDlg implements ChangeListener {
     zilimmag.addChangeListener(this);
     JLabel br = new JLabel(TextBndl.getString("StrPrmDlg.Bright"));
     JLabel dm = new JLabel(TextBndl.getString("StrPrmDlg.Dim"));
-    bright = new JSlider(1, StarImages.NUMIMAGES, 1);
-    dim    = new JSlider(1, StarImages.NUMIMAGES, 1);
+    bright = new JSlider(1, NUMIMAGES, 1);
+    dim    = new JSlider(1, NUMIMAGES, 1);
     bright.setInverted(true);  // Put highest values on left side
     dim.setInverted(true);     // Put highest values on left side
     bright.setMajorTickSpacing(1);
@@ -290,9 +290,9 @@ public class StrPrmDlg extends EscapeDlg implements ChangeListener {
     zilbl.setText(Double.toString(zimag10/10.0));
 
     bright.setValue(Math.max(1,   // Clamp just to make sure...
-                    Math.min(StarImages.NUMIMAGES, prefer.getSzBright())));
+                    Math.min(NUMIMAGES, prefer.getSzBright())));
     dim.setValue(Math.max(1,
-                 Math.min(StarImages.NUMIMAGES, prefer.getSzDim())));
+                 Math.min(NUMIMAGES, prefer.getSzDim())));
   }
 
   /* <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
@@ -309,8 +309,6 @@ public class StrPrmDlg extends EscapeDlg implements ChangeListener {
    */
   final class Stars extends JPanel {
     private Color backgnd;
-    private Image[] stars;
-    private int offset;
 
     public Stars(Preferences prefer) {
       setOpaque(true);   // Informs Swing's paint system that painting of
@@ -320,11 +318,8 @@ public class StrPrmDlg extends EscapeDlg implements ChangeListener {
       setPreferredSize(new Dimension(20, 20)); // dummy, desired height
 
       backgnd = prefer.colorBackGnd();
-      stars = new StarImages().getImages(prefer.colorStar(), backgnd);
-      offset = StarImages.OFFSET;
     }
 
-    boolean bmpStars = prefer.getBmpStars(); // Are we painting bmps?
     /* Override paint to avoid handling a border */
     public void paint(Graphics g) {
       Dimension dim = getSize();
@@ -332,35 +327,27 @@ public class StrPrmDlg extends EscapeDlg implements ChangeListener {
         Ellipse2D.Float circle = new Ellipse2D.Float();
         g.setColor(backgnd);
         g.fillRect(0, 0, dim.width, dim.height);
-        if ( !bmpStars ) {
-          Graphics2D g2 = (Graphics2D)g;
-          g2.setPaint(prefer.colorStar());
-          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                              RenderingHints.VALUE_ANTIALIAS_ON);
-        }
+
+        Graphics2D g2 = (Graphics2D)g;
+        g2.setPaint(StarColor);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON);
+
         int y = dim.height / 2;
         // Step size is dim.width / stars.length
-        int x0 = dim.width / (stars.length * 2) - 1; // -1 is fudge
-        for ( int i = 0; i < stars.length; i++ )
-          if ( !bmpStars ) {
-            circle.setFrame(x0 + i*(dim.width+2)/stars.length - (11-i)/2.0,
-                            y - (11-i)/2.0,
-                            11-i+0.2, 11-i+0.2); // See StarDB.java for method;
-                            // +0.2 cheats a bit so that dimmest star can be
-                            // seen; for some reason it's harder to see here
-                            // than on the main star window
-            ((Graphics2D)g).fill(circle);
-          }
-          else
-            g.drawImage(stars[stars.length - 1 - i],
-                        x0 + i*(dim.width+2)/stars.length - offset, y - offset,
-                        null);           // +2 is fudge
-
-        if ( !bmpStars ) {
-          Graphics2D g2 = (Graphics2D)g;
-          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                              RenderingHints.VALUE_ANTIALIAS_OFF);
+        int x0 = dim.width / (NUMIMAGES * 2) - 1; // -1 is fudge
+        for ( int i = 0; i < NUMIMAGES; i++ ) {
+          circle.setFrame(x0 + i*(dim.width+2)/NUMIMAGES - (11-i)/2.0,
+                          y - (11-i)/2.0,
+                          11-i+0.2, 11-i+0.2); // See StarDB.java for method;
+                          // +0.2 cheats a bit so that dimmest star can be
+                          // seen; for some reason it's harder to see here
+                          // than on the main star window
+          ((Graphics2D)g).fill(circle);
         }
+
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_OFF);
       }
     }
   }

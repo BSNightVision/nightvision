@@ -2,7 +2,7 @@ Night Vision source files
 -------------------------
 
 Night Vision may be examined and built with the source files that
-have been included in the source file package that includes this file.
+are included in this directory.
 
 Required for building NV is the Java Development Kit (minimum
 version 8):
@@ -11,13 +11,24 @@ and the Apache Ant build tool:
   https://ant.apache.org/bindownload.cgi
 
 With Java and Ant installed, all that is needed to compile and run NV
-is to issue the following command from the directory in the package
-that includes this file:
+is to issue the following command from this directory:
 
   ant run
 
 This will utilize the compile and build instructions within the
-build.xml file included in this directory.
+build.xml file included in this directory, and starts Night Vision.
+
+
+To create a single file finished product, issue the following:
+
+  ant compress
+
+This will create nvj.jar within the build subdirectory. Windows users
+can double-click this file to run Night Vision. Otherwise the
+following command may be issued from that build subdirectory (or any
+directory that includes nvj.jar):
+
+  java -jar nvj.jar
 
 
 Not included in this package are the files and the InstallBuilder
@@ -27,10 +38,15 @@ may only be used for Night Vision.  InstallBuilder is available
 at https://installbuilder.com.
 
 
+A new release of Night Vision should update text in the following:
+src/com/nvastro/nvj/Nvj.java - string values for PgmVersion & PgmInfo
+text/nvj.html - version & year, and update history section
+
+
 NV began as a program for the OS/2 operating system.  Around the
 year 2000 conversion to Java began.  After conversion was complete
 a number of new features have been added, and now (as of November 2024)
-NV comprises 69 Java source files.  Some comments on the Java source:
+NV comprises 68 Java source files.  Some comments on the Java source:
 - There were many problems encountered in the Java compilers at
   the time the earliest NV source files were written.  Many of the
   work-arounds are still there, as focus has always been in adding

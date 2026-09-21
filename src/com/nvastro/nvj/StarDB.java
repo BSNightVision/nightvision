@@ -1,6 +1,6 @@
 /*
  * StarDB.java  -  Star database and methods
- * Copyright (C) 2011-2023 Brian Simpson
+ * Copyright (C) 2011-2026 Brian Simpson
  * This file is part of Night Vision.
  *
  * Night Vision is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 package com.nvastro.nvj;
 
 import java.awt.FontMetrics;
-import java.awt.Image;
+
 import java.awt.RenderingHints;
 import java.awt.geom.Ellipse2D;
 import java.io.BufferedReader;
@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.StringTokenizer;
+import java.awt.Color;
 
 
 /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
@@ -82,7 +83,24 @@ public class StarDB {
   static private byte[]   misc;
   static private byte[]   con;
   static private String[] spect;
-  private StarImages starimages;
+  static private byte[]   color;
+
+  // Star colors
+  // The following resource was used for O,B,A,F,G,K,M star colors
+  // http://www.vendian.org/mncharity/dir3/starcolor/  by Mitchell Charity
+  static private Color O = new Color(155, 176, 255); // "Oh,"
+  static private Color B = new Color(170, 191, 255); // "Be"
+  static private Color A = new Color(202, 215, 255); // "A"
+  static private Color F = new Color(248, 247, 255); // "Fine"
+  static private Color G = new Color(255, 244, 234); // "Girl,"
+  static private Color K = new Color(255, 210, 161); // "Kiss"
+  static private Color M = new Color(255, 204, 111); // "Me,"
+  static private Color R = new Color(255, 190,  80); // "Right"
+  static private Color N = new Color(255, 150,  60); // "Now"
+  static private Color S = new Color(255, 120,  50); // "Smack"
+  static private Color C = new Color(255, 170,  70); // Carbon
+  static private Color X = new Color(225, 225, 225); // Spectrum not specified
+  static private Color Colors[] = {O, B, A, F, G, K, M, R, N, S, C, X};
 
   // Used for reading external star DB
   static private int numComplaints = 0;
@@ -99,8 +117,6 @@ public class StarDB {
     if ( initialized == false ) {
       init();
     }
-
-    starimages = new StarImages();
   }
 
   /** <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
@@ -154,6 +170,7 @@ public class StarDB {
     misc   = new byte[num];
     con    = new byte[num];
     spect  = new String[num];
+    color  = new byte[num];
     byte[] spb = new byte[2];
 
     for ( int i = 0; i < num; i++ ) {
@@ -177,6 +194,25 @@ public class StarDB {
       // Note: Using rectangular coordinates is a bit speedier than
       // using spherical coordinates by a factor of about 6/5.  Not
       // sure if this is worth the extra memory space.
+      
+      // Derived colors
+      if ( spect[i].length() == 0 ) { color[i] = (byte)(Colors.length - 1); }
+      else {
+        switch ( spect[i].charAt(0) ) {
+          case 'O': color[i] =  0; break;
+          case 'B': color[i] =  1; break;
+          case 'A': color[i] =  2; break;
+          case 'F': color[i] =  3; break;
+          case 'G': color[i] =  4; break;
+          case 'K': color[i] =  5; break;
+          case 'M': color[i] =  6; break;
+          case 'R': color[i] =  7; break;
+          case 'N': color[i] =  8; break;
+          case 'S': color[i] =  9; break;
+          case 'C': color[i] = 10; break;
+          default:  color[i] = 11; break; // Shouldn't happen
+        }
+      }
     }
   }
 
@@ -291,6 +327,7 @@ public class StarDB {
     misc   = new byte[num];
     con    = new byte[num];
     spect  = new String[num];
+    color  = new byte[num];
 
     double cosde;
     Star s;
@@ -310,6 +347,25 @@ public class StarDB {
       rx[i] = cosde * Math.cos(ra[i]);
       ry[i] = cosde * Math.sin(ra[i]);
       rz[i] = Math.sin(dec[i]);
+      
+      // Derived colors
+      if ( spect[i].length() == 0 ) { color[i] = (byte)(Colors.length - 1); }
+      else {
+        switch ( spect[i].charAt(0) ) {
+          case 'O': color[i] =  0; break;
+          case 'B': color[i] =  1; break;
+          case 'A': color[i] =  2; break;
+          case 'F': color[i] =  3; break;
+          case 'G': color[i] =  4; break;
+          case 'K': color[i] =  5; break;
+          case 'M': color[i] =  6; break;
+          case 'R': color[i] =  7; break;
+          case 'N': color[i] =  8; break;
+          case 'S': color[i] =  9; break;
+          case 'C': color[i] = 10; break;
+          default:  color[i] = 11; break; // Shouldn't happen
+        }
+      }
     }
 
     return true;
@@ -836,106 +892,85 @@ public class StarDB {
     /* Set up magnitude clipping limit */
     short limMag100 = (short)getClipLimit100(mp.prefer);
 
-    boolean bmpStars = mp.prefer.getBmpStars(); // Are we painting bmps?
+    /* Set up circle, paint antialiasing, print color */
+    Ellipse2D.Float circle = new Ellipse2D.Float();
+    float s, offset;
+    if ( !mp.printing ) {  // If painting (to screen)
+      mp.g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON);
+    } else                // Else printing (to paper)
+      mp.g.setPaint(mp.prefer.prclrStar());
 
-    if ( !mp.printing && bmpStars ) { // If bmp painting to screen
-      /* Get star images and the offset needed to position them */
-      Image[] stars = starimages.getImages(mp.prefer.colorStar(),
-                                           mp.prefer.colorBackGnd());
-      float offset = StarImages.OFFSET - 0.5f; // 0.5 will make subsequent
-                     // integer truncation a rounding operation
+    // Star size = a + b * mag100
+    // The full magnitude range is maxmag100 - minmag100 (E.g. 1100 - (-150))
+    // The limited magnitude range is limmag100 - minmag100
+    // size = szBright + (szDim - szBright) *
+    //                   ((mag100 - minmag100) / (limmag100 - minmag100)
+    //      = szBright for mag100 = minmag100 (= -150)
+    //      = szDim    for mag100 = limmag100
+    // (11 >= szBright >= szDim >= 1) ==> (11 >= size >= 1)
+    // For szBright = 11 and szDim = 1, the following coefficients
+    // for equation:  size = a + b * mag100
+    // will yield a number between 1 and 11 (inclusive):
+    b = (float)((mp.prefer.getSzDim() - mp.prefer.getSzBright()) /
+        ((double)limMag100 - mag100[0]));      // minmag100 = mag100[0]
+    a = mp.prefer.getSzBright() - b * mag100[0];
+    // Let's trim this down a bit when printing
+    if ( mp.printing ) {
+      a /= 1.5;
+      b /= 1.5;
+    }
 
-      // Star size = int(a + b * mag100)
-      // See bottom of file for derivation of a and b
-      b = (mp.prefer.getSzDim() - mp.prefer.getSzBright() - 1) /
-          ((float)(limMag100 + 2 - mag100[0]));
-      a = mp.prefer.getSzBright() + b * (1 - mag100[0]);
+    /* Loop through stars */
+    for ( int i = 0; i < num && mp.isDrawing(); i++ ) {
+      if ( mag100[i] > limMag100 ) break;
 
-      /* Loop through stars */
-      for ( int i = 0; i < num && mp.isDrawing(); i++ ) {
-        if ( mag100[i] > limMag100 ) break;
+      if ( mp.rd2xyhit(rx[i], ry[i], rz[i], x, y) > 0 ) {
+        s = a + b * mag100[i];
 
-        if ( mp.rd2xyhit(rx[i], ry[i], rz[i], x, y) > 0 ) {
-          mp.g.drawImage(stars[(int)(a + b * mag100[i])],
-                         (int)(x[0] - offset), (int)(y[0] - offset), null);
+        if ( !mp.printing ) { // If painting (to screen) set star color
+          mp.g.setPaint(Colors[color[i]]);
+        }
 
-          if ( ((drawBayr && greek[i] != 0) || (drawFlam && flam[i] > 0)) &&
-               nlab < NUM_LAB ) {
-            xlab[nlab] = x[0];
-            ylab[nlab] = y[0];
-            ilab[nlab++] = i;
-          }
+        // To properly place the stars, need to right-shift & down-shift
+        // by 0.5 when painting to screen (vs printing to paper),
+        // not sure why...
+        offset = s / 2 - (mp.printing ? 0.0f : 0.5f);
+
+        circle.setFrame(x[0] - offset, y[0] - offset, s, s);
+        mp.g.fill(circle);
+
+        if ( ((drawBayr && greek[i] != 0) || (drawFlam && flam[i] > 0)) &&
+             nlab < NUM_LAB ) {
+          xlab[nlab] = x[0];
+          ylab[nlab] = y[0];
+          ilab[nlab++] = i;
         }
       }
     }
-    else {                     // Else printing (or !bmpStars)
-      Ellipse2D.Float circle = new Ellipse2D.Float();
-      float s, offset;
-      if ( !mp.printing ) {
-        mp.g.setPaint(mp.prefer.colorStar());
-        mp.g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                              RenderingHints.VALUE_ANTIALIAS_ON);
-      } else
-        mp.g.setPaint(mp.prefer.prclrStar());
 
-      // Star size = a + b * mag100
-      // The full magnitude range is maxmag100 - minmag100 (E.g. 700 - (-150))
-      // The limited magnitude range is limmag100 - minmag100
-      // size = szBright + (szDim - szBright) *
-      //                   ((mag100 - minmag100) / (limmag100 - minmag100)
-      //      = szBright for mag100 = minmag100 (= -150)
-      //      = szDim    for mag100 = limmag100
-      // (11 >= szBright >= szDim >= 1) ==> (11 >= size >= 1)
-      // For szBright = 11 and szDim = 1, the following coefficients
-      // for equation:  size = a + b * mag100
-      // will yield a number between 1 and 11 (inclusive):
-      b = (float)((mp.prefer.getSzDim() - mp.prefer.getSzBright()) /
-          ((double)limMag100 - mag100[0]));      // minmag100 = mag100[0]
-      a = mp.prefer.getSzBright() - b * mag100[0];
-      // Let's trim this down a bit when printing
-      if ( mp.printing ) {
-        a /= 1.5;
-        b /= 1.5;
-      }
+    // Uncomment this section to see a side by side comparison of star colors
+    //x[0] = 10;
+    //y[0] = 10;
+    //for ( int i = 0; i < Colors.length; i++ ) {
+    //    mp.g.setPaint(Colors[i]);
+    //    circle.setFrame(x[0] + (20*i)- 5, y[0] - 5, 10, 10);
+    //    mp.g.fill(circle);
+    //}
 
-      /* Loop through stars */
-      for ( int i = 0; i < num && mp.isDrawing(); i++ ) {
-        if ( mag100[i] > limMag100 ) break;
+    // The following was used to compare placement of stars:
+    // painting to screen vs printing to paper
+    //if ( mp.printing ) circle.setFrame(29.0, 29.0, 2, 2);
+    //else               circle.setFrame(29.5, 29.5, 2, 2);
+    //mp.g.fill(circle);
+    //mp.g.drawLine(22, 30, 27, 30);
+    //mp.g.drawLine(33, 30, 38, 30);
+    //mp.g.drawLine(30, 22, 30, 27);
+    //mp.g.drawLine(30, 33, 30, 38);
 
-        if ( mp.rd2xyhit(rx[i], ry[i], rz[i], x, y) > 0 ) {
-          s = a + b * mag100[i];
-
-          // To properly place the stars, need to right-shift & down-shift
-          // by 0.5 when painting to screen (vs printing to paper),
-          // not sure why...
-          offset = s / 2 - (mp.printing ? 0.0f : 0.5f);
-
-          circle.setFrame(x[0] - offset, y[0] - offset, s, s);
-          mp.g.fill(circle);
-
-          if ( ((drawBayr && greek[i] != 0) || (drawFlam && flam[i] > 0)) &&
-               nlab < NUM_LAB ) {
-            xlab[nlab] = x[0];
-            ylab[nlab] = y[0];
-            ilab[nlab++] = i;
-          }
-        }
-      }
-
-      // The following was used to compare placement of stars:
-      // painting to screen vs printing to paper
-      //if ( mp.printing ) circle.setFrame(29.0, 29.0, 2, 2);
-      //else               circle.setFrame(29.5, 29.5, 2, 2);
-      //mp.g.fill(circle);
-      //mp.g.drawLine(22, 30, 27, 30);
-      //mp.g.drawLine(33, 30, 38, 30);
-      //mp.g.drawLine(30, 22, 30, 27);
-      //mp.g.drawLine(30, 33, 30, 38);
-
-      if ( !mp.printing )
-        mp.g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                              RenderingHints.VALUE_ANTIALIAS_OFF);
-    }
+    if ( !mp.printing )
+      mp.g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_OFF);
 
     /* Do star labels */
     if ( drawBayr || drawFlam ) {
